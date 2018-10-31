@@ -1,0 +1,17 @@
+#!bin/bash
+
+DUMP=$1
+DATE=$(date +%Y%m%d%H%M)
+FILE='file.csv'
+awk 'NR > 1 { print $0}' $DUMP >$FILE
+max=`wc -l $FILE | awk '{print $1}'`
+printf 'RECEIPT_NUMBER,DATE,DETAILS,STATUS,WITHDRAW_AMOUNT,PAID_IN_AMOUNT,BALANCE,BALANCE_CONFIRMED,OTHERPARTYINFO,TRANSACTIONPARTYDETAILS,TRANSACTION_ID,REMARK,MSISDN \n' >>$DATE'_'$DUMP
+
+while read line; do
+#       echo $line
+        echo $line | awk -F"," '{print $3}' | awk -F"Acc." '{print $2}' | sed 's/ //g' |sed 's/[^0-9]*//g' |  rev | cut -c -9 | rev >msisdn
+        MSISDN=`cat msisdn`
+        echo $line | awk -F, -v var="$MSISDN" '{print $1","$2","$3","$4","$5","$6","$7","$8","$10","$11","$12","$13","var}' >>$DATE'_'$DUMP
+done <$FILE
+mv $DATE'_'$DUMP 'Mpesa_OCT_.csv'
+rm -rf $FILE
